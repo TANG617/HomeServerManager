@@ -40,7 +40,7 @@ void updateStatus()
 void handleRoot()
 {
 
-	server.send(200, "text/plain", "Hello from HomeServerManager");
+	server.send(200, "text/plain", "Hello from HomeServer Manager");
 }
 
 void handlePowerOn()
