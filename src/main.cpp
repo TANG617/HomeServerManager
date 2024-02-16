@@ -14,14 +14,25 @@ ESP8266WebServer server(80);
 
 enum ServerStatus
 {
-	PowerOn = 0x00,
-	PowerOff = 0x01,
+	PowerOff = 0x00,
+	PowerOn = 0x01,
 	Unknown = 0x02,
 };
-
 ServerStatus serverStatus = Unknown;
 
-void initStatus()
+void shortPress(){
+	digitalWrite(controlPin, 1);
+	delay(1000);
+	digitalWrite(controlPin, 0);
+}
+
+void longPress(){
+	digitalWrite(controlPin, 1);
+	delay(8000);
+	digitalWrite(controlPin, 0);
+}
+
+void updateStatus()
 {
 	serverStatus = (ServerStatus)digitalRead(statusPin);
 }
@@ -36,22 +47,46 @@ void handlePowerOn()
 {
 	if (serverStatus == PowerOff)
 	{
-		digitalWrite(controlPin, 1);
 		server.send(200, "text/plain", "Power On");
-		delay(1000);
-		digitalWrite(controlPin,0);
+		shortPress();
+	}
+	else if(serverStatus == PowerOn){
+		server.send(200, "text/plain", "Already Power On");
 	}
 	else{
-		server.send(200, "text/plain", "Already Power On");
+		server.send(200, "text/plain", "Error");
 	}
 }
 
 void handlePowerOff()
 {
 
-	server.send(200, "text/plain", "Power Off");
+	if (serverStatus == PowerOn)
+	{
+		server.send(200, "text/plain", "Power Off");
+		shortPress();
+	}
+	else if(serverStatus == PowerOff){
+		server.send(200, "text/plain", "Already Power Off");
+	}
+	else{
+		server.send(200, "text/plain", "Error");
+	}
 }
-
+void handleForcePowerOff()
+{
+	if (serverStatus == PowerOn)
+	{
+		server.send(200, "text/plain", "Force Power Off");
+		longPress();
+	}
+	else if(serverStatus == PowerOff){
+		server.send(200, "text/plain", "Already Power Off");
+	}
+	else{
+		server.send(200, "text/plain", "Error");
+	}
+}
 void handleNotFound()
 {
 
@@ -97,6 +132,11 @@ void setup(void)
 	}
 
 	server.on("/", handleRoot);
+	server.on("/on", handlePowerOn);
+	server.on("/off", handlePowerOff);
+	server.on("/forceoff", handleForcePowerOff);
+
+
 
 	server.onNotFound(handleNotFound);
 
@@ -106,5 +146,6 @@ void setup(void)
 
 void loop(void)
 {
+	updateStatus();
 	server.handleClient();
 }
